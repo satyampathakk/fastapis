@@ -1,37 +1,55 @@
-from fastapi import FastAPI, Request
-import google.generativeai as genai
-from scrapper import scrape_patent_data
+# main.py
+
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
+from models import User, Message, SessionLocal
+from pydantic import BaseModel
+from typing import List
+from datetime import datetime
+from schema import *
 app = FastAPI()
-#genai.configure(api_key="AIzaSyC-MxhBy1IpkwfyUNbLgyPkCFpqAs8_Cig")
-# Load generative model
-model = genai.GenerativeModel("gemini-pro")
 
-@app.post("/")
-async def search_patent(request: Request):
-    data = await request.json()  # Extract JSON data from request
-    text = data.get("text")
-    genai.configure(api_key=data.get("key"))
+# Dependency: Get the DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-    # Construct the text with the check text
-    check_text = "give me only minimum 5-7 word to so that i can search on google patent to match my idea with any which is relevant remember your response should be those 5-7 word nothing else"
+# Create a user
+@app.post("/users/")
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    new_user = User(username=user.username)
+    db.add(new_user)
+    db.commit()
+    return {"username": new_user.username}
 
-    # Start the generative chat model and send the first message
-    chat = model.start_chat()
-    res = chat.send_message(text + check_text)
+# Store a message
+@app.post("/messages/", response_model=MessageResponse)
+def create_message(msg: MessageCreate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == msg.username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    # Scrape patent data using the model's response
-    file_data=scrape_patent_data(res.text)
+    new_msg = Message(username=msg.username, msg=msg.msg)
+    db.add(new_msg)
+    db.commit()
+    db.refresh(new_msg)
+    return new_msg
 
-    # Read additional data from file
-    prompt = ("commpare both idea and tell if any thing is common in them i am giving "
-              "you abstrat idea of both the project with intentiono of identifying if my idea "
-              "is different and can be put to publish and patent tell your opinion if they are "
-              "similar and what way before this prompt the idea which is ours is given and after "
-              "this text all the idea which are on google patent is there with its patent no . In "
-              "response mention the patent number also")
+# Get all messages
+@app.get("/messages/", response_model=List[MessageResponse])
+def get_messages(db: Session = Depends(get_db)):
+    messages = db.query(Message).all()
+    return messages
 
-    # Send the second message for comparison
-    response = chat.send_message(text + prompt + file_data)
-
-    # Return the response in JSON format
-    return {"results": response.text}
+# Get messages by username
+@app.get("/users/{username}/messages", response_model=List[MessageResponse])
+def get_user_messages(username: str, db: Session = Depends(get_db)):
+    messages = db.query(Message).filter(Message.username == username).all()
+    return messages
