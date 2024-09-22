@@ -1,5 +1,5 @@
 # models.py
-from sqlalchemy import Column, String, Text, DateTime,Integer
+from sqlalchemy import Column, String, Text, DateTime,Integer,ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
@@ -18,7 +18,11 @@ class User(Base):
     __tablename__ = "users"
     username = Column(String, primary_key=True, index=True, unique=True)
 
-# Define Message model with a foreign key to `username`
+class UserDetails(Base):
+    __tablename__ = "user_details"
+    username = Column(String, ForeignKey('users.username'), primary_key=True, index=True, unique=True)
+    public_key = Column(String)
+
 class Message(Base):
     __tablename__ = "messages"
 

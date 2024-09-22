@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import User, Message, SessionLocal,Messages
+from models import User, Message, SessionLocal,Messages,UserDetails
 from typing import List
 from schema import *
 app = FastAPI()
@@ -27,24 +27,50 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     return {"username": new_user.username}
 
-# # Store a message
-# @app.post("/messages/", response_model=MessageResponse)
-# def create_message(msg: MessageCreate, db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.username == msg.username).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
+@app.post("/details/{username}", response_model=CreateDetails)  
+def create_user_details(username: str, details: CreateDetails, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == username).first()
+    if not db_user:
+        return HTTPException(status_code=404, detail="User not found")
+    existing_details = db.query(UserDetails).filter(UserDetails.username == username).first()
+    if existing_details:
 
-#     new_msg = Message(username=msg.username, msg=msg.msg)
-#     db.add(new_msg)
-#     db.commit()
-#     db.refresh(new_msg)
-#     return new_msg
+        existing_details.public_key = details.public_key  # Replace with the new value
+        db.commit()
+        print("hello")
+        return existing_details
 
-# # Get all messages
-# @app.get("/messages/", response_model=List[MessageResponse])
-# def get_messages(db: Session = Depends(get_db)):
-#     messages = db.query(Message).all()
-#     return messages
+    new_details = UserDetails(username=username, public_key=details.public_key)  # Unpack CreateDetails data
+    db.add(new_details)
+    db.commit()
+    return new_details
+
+@app.get("/users/{username}/details")
+def get_user_details(username: str, db: Session = Depends(get_db)):
+    db_user_details = db.query(UserDetails).filter(UserDetails.username == username).first()
+    if not db_user_details:
+        raise HTTPException(status_code=404, detail="User details not found")
+
+    return db_user_details
+
+# Store a message
+@app.post("/messages/", response_model=MessageResponse)
+def create_message(msg: MessageCreate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == msg.username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    new_msg = Message(username=msg.username, msg=msg.msg)
+    db.add(new_msg)
+    db.commit()
+    db.refresh(new_msg)
+    return new_msg
+
+# Get all messages
+@app.get("/messages/", response_model=List[MessageResponse])
+def get_messages(db: Session = Depends(get_db)):
+    messages = db.query(Message).all()
+    return messages
 
 @app.post("/messages/send/", response_model=CreateUserMes)
 def send_message(msg: CreateUserMes, db: Session = Depends(get_db)):
