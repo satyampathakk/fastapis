@@ -16,7 +16,6 @@ Base = declarative_base()
 # Define User model with `username` as primary key
 class User(Base):
     __tablename__ = "users"
-
     username = Column(String, primary_key=True, index=True, unique=True)
 
 # Define Message model with a foreign key to `username`
@@ -26,7 +25,16 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, index=True)
     msg = Column(Text)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=datetime.now)
+
+class Messages(Base):
+    __tablename__ = "message"
+
+    id = Column(Integer, primary_key=True, index=True)
+    sender_username = Column(String, index=True)
+    recipient_username = Column(String, index=True)  # Added recipient field
+    msg = Column(Text)
+    timestamp = Column(DateTime, default=datetime.now)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)

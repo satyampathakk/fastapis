@@ -2,10 +2,8 @@
 
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import User, Message, SessionLocal
-from pydantic import BaseModel
+from models import User, Message, SessionLocal,Messages
 from typing import List
-from datetime import datetime
 from schema import *
 app = FastAPI()
 
@@ -48,8 +46,35 @@ def get_messages(db: Session = Depends(get_db)):
     messages = db.query(Message).all()
     return messages
 
-# Get messages by username
-@app.get("/users/{username}/messages", response_model=List[MessageResponse])
-def get_user_messages(username: str, db: Session = Depends(get_db)):
-    messages = db.query(Message).filter(Message.username == username).all()
+@app.post("/messages/send/", response_model=CreateUserMes)
+def send_message(msg: CreateUserMes, db: Session = Depends(get_db)):
+    sender = db.query(User).filter(User.username == msg.sender_username).first()
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender not found")
+
+    recipient = db.query(User).filter(User.username == msg.recipient_username).first()
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Recipient not found")
+
+    new_msg = Messages(sender_username=msg.sender_username, recipient_username=msg.recipient_username, msg=msg.msg)
+    db.add(new_msg)
+    db.commit()
+    db.refresh(new_msg)
+    return new_msg
+
+# Get messages between two users
+@app.get("/messages/{sender_username}/{recipient_username}", response_model=List[CreateUserMes])
+def get_messages_between(sender_username: str, recipient_username: str, db: Session = Depends(get_db)):
+    messages = db.query(Messages).filter(
+        (Messages.sender_username == sender_username) & 
+        (Messages.recipient_username == recipient_username) |
+        (Messages.sender_username == recipient_username) & 
+        (Messages.recipient_username == sender_username)
+    ).all()
+
+    if not messages:
+        raise HTTPException(status_code=404, detail="No messages found between these users")
+
     return messages
+
+

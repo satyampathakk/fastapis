@@ -19,3 +19,7 @@ class MessageResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class CreateUserMes(BaseModel):
+    sender_username:str
+    recipient_username:str
+    msg: str
