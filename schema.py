@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     username: str
 
 class MessageCreate(BaseModel):
-    username: str  # Changed to reference `username` instead of `user_id`
+    username: str  
     msg: str
 
 class MessageResponse(BaseModel):

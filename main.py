@@ -27,24 +27,24 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     return {"username": new_user.username}
 
-# Store a message
-@app.post("/messages/", response_model=MessageResponse)
-def create_message(msg: MessageCreate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == msg.username).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+# # Store a message
+# @app.post("/messages/", response_model=MessageResponse)
+# def create_message(msg: MessageCreate, db: Session = Depends(get_db)):
+#     user = db.query(User).filter(User.username == msg.username).first()
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
 
-    new_msg = Message(username=msg.username, msg=msg.msg)
-    db.add(new_msg)
-    db.commit()
-    db.refresh(new_msg)
-    return new_msg
+#     new_msg = Message(username=msg.username, msg=msg.msg)
+#     db.add(new_msg)
+#     db.commit()
+#     db.refresh(new_msg)
+#     return new_msg
 
-# Get all messages
-@app.get("/messages/", response_model=List[MessageResponse])
-def get_messages(db: Session = Depends(get_db)):
-    messages = db.query(Message).all()
-    return messages
+# # Get all messages
+# @app.get("/messages/", response_model=List[MessageResponse])
+# def get_messages(db: Session = Depends(get_db)):
+#     messages = db.query(Message).all()
+#     return messages
 
 @app.post("/messages/send/", response_model=CreateUserMes)
 def send_message(msg: CreateUserMes, db: Session = Depends(get_db)):
@@ -74,7 +74,6 @@ def get_messages_between(sender_username: str, recipient_username: str, db: Sess
 
     if not messages:
         raise HTTPException(status_code=404, detail="No messages found between these users")
-
     return messages
 
 
