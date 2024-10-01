@@ -21,7 +21,7 @@ class User(Base):
 class UserDetails(Base):
     __tablename__ = "user_details"
     username = Column(String, ForeignKey('users.username'), primary_key=True, index=True, unique=True)
-    public_key = Column(String)
+    public_key = Column(Text)
 
 class Message(Base):
     __tablename__ = "messages"
