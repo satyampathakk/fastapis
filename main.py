@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from models import User, Message, SessionLocal,Messages,UserDetails
 from typing import List
 from schema import *
+import psutil
 app = FastAPI()
 
 # Dependency: Get the DB session
@@ -103,3 +104,22 @@ def get_messages_between(sender_username: str, recipient_username: str, db: Sess
     return messages
 
 
+@app.get("/system-usage")
+def get_system_usage():
+    # CPU Usage
+    cpu_usage_percent = psutil.cpu_percent(interval=1)
+    
+    # Memory Usage
+    memory_info = psutil.virtual_memory()
+    total_memory = memory_info.total / (1024 * 1024)  # Total Memory in MB
+    free_memory = memory_info.free / (1024 * 1024)    # Free Memory in MB
+    used_memory = memory_info.used / (1024 * 1024)    # Used Memory in MB
+    memory_usage_percent = memory_info.percent        # Memory usage percentage
+
+    return {
+        "cpu_usage_percent": cpu_usage_percent,
+        "total_memory": total_memory,
+        "free_memory": free_memory,
+        "used_memory": used_memory,
+        "memory_usage_percent": memory_usage_percent
+    }
