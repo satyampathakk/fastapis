@@ -1,10 +1,12 @@
 # main.py
 import os
+from sqlalchemy import desc
 from fastapi import FastAPI, Depends, HTTPException,Request
 from sqlalchemy.orm import Session
 from models import User, Message, SessionLocal,Messages,UserDetails
 from typing import List
 from schema import *
+from sqlalchemy.sql.expression import func
 import psutil
 app = FastAPI()
 
@@ -70,7 +72,7 @@ def create_message(msg: MessageCreate, db: Session = Depends(get_db)):
 # Get all messages
 @app.get("/messages/", response_model=List[MessageResponse])
 def get_messages(db: Session = Depends(get_db)):
-    messages = db.query(Message).all()
+    messages = db.query(Message).order_by(Message.timestamp.desc()).limit(15).all()
     return messages
 
 @app.post("/messages/send/", response_model=CreateUserMes)
@@ -97,7 +99,7 @@ def get_messages_between(sender_username: str, recipient_username: str, db: Sess
         (Messages.recipient_username == recipient_username) |
         (Messages.sender_username == recipient_username) & 
         (Messages.recipient_username == sender_username)
-    ).all()
+    ).order_by(Messages.timestamp.desc()).limit(7).all()
 
     if not messages:
         raise HTTPException(status_code=404, detail="No messages found between these users")
