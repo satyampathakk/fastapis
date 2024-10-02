@@ -124,16 +124,4 @@ def get_system_usage():
     }
 
 
-@app.post("/flush", response_model=dict)
-def flush_database(request: Request):
-    if request.client.host != "127.0.0.1":
-        raise HTTPException(status_code=403, detail="Access forbidden: This endpoint is only available locally.")
-    
-    try:
-        # Remove the database file
-        os.remove("chat.db")  # Replace with your actual database file name
-        return {"message": "Database flushed successfully."}
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Database file not found.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
