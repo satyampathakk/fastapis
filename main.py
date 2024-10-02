@@ -1,6 +1,6 @@
 # main.py
-
-from fastapi import FastAPI, Depends, HTTPException
+import os
+from fastapi import FastAPI, Depends, HTTPException,Request
 from sqlalchemy.orm import Session
 from models import User, Message, SessionLocal,Messages,UserDetails
 from typing import List
@@ -106,10 +106,7 @@ def get_messages_between(sender_username: str, recipient_username: str, db: Sess
 
 @app.get("/system-usage")
 def get_system_usage():
-    # CPU Usage
     cpu_usage_percent = psutil.cpu_percent(interval=1)
-    
-    # Memory Usage
     memory_info = psutil.virtual_memory()
     total_memory = memory_info.total / (1024 * 1024)  # Total Memory in MB
     free_memory = memory_info.free / (1024 * 1024)    # Free Memory in MB
@@ -123,3 +120,18 @@ def get_system_usage():
         "used_memory": used_memory,
         "memory_usage_percent": memory_usage_percent
     }
+
+
+@app.post("/flush", response_model=dict)
+def flush_database(request: Request):
+    if request.client.host != "127.0.0.1":
+        raise HTTPException(status_code=403, detail="Access forbidden: This endpoint is only available locally.")
+    
+    try:
+        # Remove the database file
+        os.remove("chat.db")  # Replace with your actual database file name
+        return {"message": "Database flushed successfully."}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Database file not found.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
