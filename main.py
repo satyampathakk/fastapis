@@ -10,7 +10,6 @@ from sqlalchemy.sql.expression import func
 import psutil
 app = FastAPI()
 
-# Dependency: Get the DB session
 def get_db():
     db = SessionLocal()
     try:
@@ -99,7 +98,7 @@ def get_messages_between(sender_username: str, recipient_username: str, db: Sess
         (Messages.recipient_username == recipient_username) |
         (Messages.sender_username == recipient_username) & 
         (Messages.recipient_username == sender_username)
-    ).order_by(Messages.timestamp.desc()).limit(7).all()
+    ).order_by(Messages.timestamp.desc()).limit(3).all()
 
     if not messages:
         raise HTTPException(status_code=404, detail="No messages found between these users")
