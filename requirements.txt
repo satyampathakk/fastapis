@@ -3,3 +3,4 @@ SQLAlchemy==2.0.34
 pydantic==2.7.4
 uvicorn==0.30.6
 starlette==0.38.4
+psutil==5.9.8
