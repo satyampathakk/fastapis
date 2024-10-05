@@ -18,6 +18,9 @@ def get_db():
         db.close()
 
 # Create a user
+@app.get('/')
+def home():
+    return {"message": "Hello, World!"}
 @app.post("/users/")
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
