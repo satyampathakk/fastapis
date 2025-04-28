@@ -25,7 +25,7 @@ After=network.target
 User=$USER
 Group=www-data
 WorkingDirectory=$(pwd)
-ExecStart=$(pwd)/venv/bin/uvicorn main:app --host 0.0.0.0 --port 80 --reload
+ExecStart=$(pwd)/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 Restart=always
 
 [Install]
